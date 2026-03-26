@@ -5,17 +5,26 @@ const jobSchema = new mongoose.Schema({
   type: String,
   payload: Object,
   priority: String,
+
   status: {
     type: String,
     default: "queued"
   },
+
   retryCount: {
     type: Number,
     default: 0
   },
+
+  maxRetries: {
+    type: Number,
+    default: 3
+  },
+
   startedAt: Date,
   completedAt: Date,
   failedAt: Date
+
 }, { timestamps: true });
 
 module.exports = mongoose.model("Job", jobSchema);
