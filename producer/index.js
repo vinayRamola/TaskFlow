@@ -6,6 +6,7 @@ const cors = require("cors");
 const connectMongo = require("../shared/mongo");
 const jobRoutes = require("./routes/jobs");
 const statsRoutes = require("./routes/stats");
+const workersRoutes = require("./routes/workers");
 const { initWebSocket } = require("../shared/websocket");
 
 const app = express();
@@ -18,6 +19,8 @@ connectMongo();
 
 app.use("/jobs", jobRoutes);
 app.use("/stats", statsRoutes);
+
+app.use("/workers", workersRoutes);
 
 const PORT = process.env.PORT || 3000;
 

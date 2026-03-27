@@ -3,27 +3,48 @@ require("dotenv").config();
 const redis = require("../shared/redis");
 const connectMongo = require("../shared/mongo");
 const Job = require("../producer/models/job");
-const crypto = require("crypto"); 
+const crypto = require("crypto");
 
 connectMongo();
 
-const workerId = process.env.WORKER_ID || `worker-${Math.floor(Math.random()*1000)}`;
+const workerId =
+  process.env.WORKER_ID || `worker-${Math.floor(Math.random() * 1000)}`;
+
+// Worker health variables
+let jobsProcessed = 0;
+let currentJobId = null;
+const workerStartTime = Date.now();
+
+async function sendHeartbeat() {
+  await redis.hset(
+    "workers",
+    workerId,
+    JSON.stringify({
+      lastSeen: Date.now(),
+      jobsProcessed,
+      currentJobId,
+      uptimeMs: Date.now() - workerStartTime
+    })
+  );
+}
 
 async function processJob(jobData) {
 
-  if (Math.random() < 0.8) {
+  // Simulated failure
+  if (Math.random() < 0.5) {
     throw new Error("Simulated job failure");
   }
 
   await new Promise((r) => setTimeout(r, 2000));
-
 }
 
 async function retryJob(jobData, retryCount) {
 
   const delay = Math.pow(2, retryCount) * 1000;
 
-  console.log(`Retrying job ${jobData.jobId} in ${delay}ms (attempt ${retryCount})`);
+  console.log(
+    `Retrying job ${jobData.jobId} in ${delay}ms (attempt ${retryCount})`
+  );
 
   await new Promise((r) => setTimeout(r, delay));
 
@@ -34,7 +55,6 @@ async function retryJob(jobData, retryCount) {
   await redis.lpush(queue, JSON.stringify(updatedJobData));
 
   console.log(`Job ${jobData.jobId} requeued after ${delay}ms`);
-
 }
 
 async function startWorker() {
@@ -47,11 +67,18 @@ async function startWorker() {
 
     try {
 
+      // Send heartbeat
+      
+
       const job = await redis.brpop("jobs:high", "jobs:normal", 0);
 
       jobData = JSON.parse(job[1]);
 
       const jobId = jobData.jobId;
+
+      currentJobId = jobId;
+
+      
 
       console.log("Processing job:", jobId);
 
@@ -61,7 +88,7 @@ async function startWorker() {
         { jobId },
         {
           status: "processing",
-          workerId: workerId,
+          workerId,
           startedAt: new Date()
         }
       );
@@ -70,11 +97,14 @@ async function startWorker() {
 
       const latency = Date.now() - startTime;
 
+      jobsProcessed++;
+      currentJobId = null;
+
       await Job.findOneAndUpdate(
         { jobId },
         {
           status: "completed",
-          workerId: workerId,
+          workerId,
           completedAt: new Date(),
           latencyMs: latency
         }
@@ -82,7 +112,11 @@ async function startWorker() {
 
       console.log(`Job completed: ${jobId} in ${latency}ms`);
 
+      
+
     } catch (error) {
+
+      currentJobId = null;
 
       if (!jobData) {
         console.error("Worker error:", error);
@@ -103,7 +137,7 @@ async function startWorker() {
       const key = `job:${jobId}:errors`;
 
       await redis.lpush(key, errorSig);
-      await redis.ltrim(key, 0, 2); // keep last 3 errors
+      await redis.ltrim(key, 0, 2);
 
       const errors = await redis.lrange(key, 0, -1);
 
@@ -116,12 +150,14 @@ async function startWorker() {
           { jobId },
           {
             status: "poison-pill",
-            workerId: workerId,
+            workerId,
             errorMessage: error.message
           }
         );
 
         console.log("Poison pill detected:", jobId);
+
+        
 
         continue;
       }
@@ -138,7 +174,7 @@ async function startWorker() {
           { jobId },
           {
             retryCount,
-            workerId: workerId
+            workerId
           }
         );
 
@@ -150,7 +186,7 @@ async function startWorker() {
           { jobId },
           {
             status: "dead-lettered",
-            workerId: workerId,
+            workerId,
             failedAt: new Date(),
             errorMessage: error.message
           }
@@ -159,13 +195,28 @@ async function startWorker() {
         await redis.lpush("jobs:dead-letter", JSON.stringify(jobData));
 
         console.log("Job moved to dead-letter queue:", jobId);
-
       }
 
+      
     }
-
   }
-
 }
 
 startWorker();
+
+setInterval(async () => {
+  try {
+    await redis.hset(
+      "workers",
+      workerId,
+      JSON.stringify({
+        lastSeen: Date.now(),
+        jobsProcessed,
+        currentJobId,
+        uptimeMs: Date.now() - workerStartTime
+      })
+    );
+  } catch (err) {
+    console.error("Heartbeat error:", err);
+  }
+}, 2000);

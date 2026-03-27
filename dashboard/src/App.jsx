@@ -6,6 +6,7 @@ import QueueMetrics from "./components/QueueMetrics";
 import Charts from "./components/Charts";
 import JobHistory from "./components/JobHistory";
 import DeadLetterPanel from "./components/DeadLetterPanel";
+import WorkerHealth from "./components/WorkerHealth";
 
 export default function App() {
   const [mode, setMode] = useState("dark");
@@ -94,6 +95,7 @@ export default function App() {
         <Charts stats={stats} history={history} t={t} />
         <JobHistory t={t} />
         <DeadLetterPanel t={t} />
+        <WorkerHealth t={t} />
 
         <footer style={{
           marginTop: 32, borderTop: `1px solid ${t.border}`, paddingTop: 16,

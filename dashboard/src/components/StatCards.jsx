@@ -12,8 +12,8 @@ const CARDS = [
 export default function StatCards({ stats, t }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 16 }}>
-      {CARDS.map(card => (
-        <Card key={card.key} {...card} value={stats[card.key]} t={t} />
+      {CARDS.map(({ key, ...card }) => (
+        <Card key={key} {...card} value={stats[key]} t={t} />
       ))}
     </div>
   );
