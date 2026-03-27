@@ -3,6 +3,7 @@ require("dotenv").config();
 const redis = require("../shared/redis");
 const connectMongo = require("../shared/mongo");
 const Job = require("../producer/models/job");
+const crypto = require("crypto"); 
 
 connectMongo();
 
@@ -92,6 +93,41 @@ async function startWorker() {
 
       console.log("Job failed:", jobId);
 
+      // ---------------- POISON PILL DETECTION ----------------
+
+      const errorSig = crypto
+        .createHash("md5")
+        .update(error.message)
+        .digest("hex");
+
+      const key = `job:${jobId}:errors`;
+
+      await redis.lpush(key, errorSig);
+      await redis.ltrim(key, 0, 2); // keep last 3 errors
+
+      const errors = await redis.lrange(key, 0, -1);
+
+      const allSame =
+        errors.length >= 3 && errors.every(sig => sig === errorSig);
+
+      if (allSame) {
+
+        await Job.findOneAndUpdate(
+          { jobId },
+          {
+            status: "poison-pill",
+            workerId: workerId,
+            errorMessage: error.message
+          }
+        );
+
+        console.log("Poison pill detected:", jobId);
+
+        continue;
+      }
+
+      // --------------------------------------------------------
+
       const jobDoc = await Job.findOne({ jobId });
 
       const retryCount = jobDoc.retryCount + 1;
@@ -111,13 +147,14 @@ async function startWorker() {
       } else {
 
         await Job.findOneAndUpdate(
-        { jobId },
-        {
-          status: "dead-lettered",
-          workerId: workerId,
-          failedAt: new Date()
-        }
-      );
+          { jobId },
+          {
+            status: "dead-lettered",
+            workerId: workerId,
+            failedAt: new Date(),
+            errorMessage: error.message
+          }
+        );
 
         await redis.lpush("jobs:dead-letter", JSON.stringify(jobData));
 
