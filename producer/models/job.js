@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 
 const jobSchema = new mongoose.Schema({
+
   jobId: String,
   type: String,
   payload: Object,
@@ -20,6 +21,10 @@ const jobSchema = new mongoose.Schema({
     type: Number,
     default: 3
   },
+
+  workerId: String,
+
+  latencyMs: Number,
 
   startedAt: Date,
   completedAt: Date,
