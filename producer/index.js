@@ -8,6 +8,8 @@ const jobRoutes = require("./routes/jobs");
 const statsRoutes = require("./routes/stats");
 const workersRoutes = require("./routes/workers");
 const { initWebSocket } = require("../shared/websocket");
+const logger = require('../shared/logger');
+
 
 const app = express();
 
@@ -29,5 +31,5 @@ const server = http.createServer(app);
 initWebSocket(server);
 
 server.listen(PORT, () => {
-    console.log(`Producer API running on port ${PORT}`);
+    logger.system.serverStarted(PORT);
 });

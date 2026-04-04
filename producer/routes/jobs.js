@@ -6,46 +6,22 @@ const Job = require("../models/job");
 const router = express.Router();
 
 router.post("/", async (req, res) => {
-
     const { type, payload, priority } = req.body;
-
     const jobId = uuidv4();
 
-    await Job.create({
+    const queue = priority === "high" ? "jobs:high" : "jobs:normal";
+
+    await redis.lpush(queue, JSON.stringify({ jobId, type, payload, priority }));
+
+    res.status(201).json({ jobId, status: "queued" });
+
+    Job.create({
         jobId,
         type,
         payload,
         priority,
         status: "queued"
-    });
-
-    const queue = priority === "high" ? "jobs:high" : "jobs:normal";
-
-    await redis.lpush(queue, JSON.stringify({ jobId, type, payload }));
-
-    res.status(201).json({ jobId, status: "queued" });
-
-});
-
-router.get("/", async (req, res) => {
-
-  try {
-
-    const limit = parseInt(req.query.limit) || 20;
-
-    const jobs = await Job.find()
-      .sort({ createdAt: -1 })
-      .limit(limit);
-
-    res.json(jobs);
-
-  } catch (error) {
-
-    console.error(error);
-    res.status(500).json({ error: "Failed to fetch jobs" });
-
-  }
-
+    }).catch(err => logger.error("Mongo write failed", { jobId, error: err.message }));
 });
 
 router.get("/dead-letter", async (req, res) => {
