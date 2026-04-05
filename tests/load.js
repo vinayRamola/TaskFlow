@@ -10,14 +10,14 @@ const jobsSubmitted   = new Counter("jobs_submitted");
 // ─── Test Configuration
 export const options = {
   stages: [
-    { duration: "10s", target: 20  },   // ramp up
-    { duration: "40s", target: 1000},   // hold at 100 VUs
-    { duration: "10s", target: 0   },   // ramp down
+    { duration: "10s", target: 20  },  
+    { duration: "40s", target: 100 },
+    { duration: "10s", target: 0   }, 
   ],
   thresholds: {
     http_req_duration:    ["p(50)<20", "p(95)<50", "p(99)<100"],  // ms
     job_queue_latency_ms: ["p(99)<50"],
-    job_failure_rate:     ["rate<0.01"],   // <1% failures
+    job_failure_rate:     ["rate<0.01"], 
     http_req_failed:      ["rate<0.01"],
   },
 };

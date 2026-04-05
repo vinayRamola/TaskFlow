@@ -1,0 +1,139 @@
+<svg width="900" height="560" viewBox="0 0 900 560" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI', Arial, sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#00000015"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="900" height="560" fill="#F8F9FC" rx="16"/>
+
+  <!-- Title -->
+  <text x="450" y="38" text-anchor="middle" font-size="20" font-weight="700" fill="#1a1a2e">TaskFlow — Job Lifecycle</text>
+  <text x="450" y="58" text-anchor="middle" font-size="12" fill="#888">Every state a job can pass through</text>
+
+  <!-- Row 1: SUBMITTED → QUEUED → PROCESSING → COMPLETED -->
+
+  <!-- SUBMITTED -->
+  <rect x="30" y="90" width="150" height="60" rx="12" fill="#F1EFE8" stroke="#888780" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="30" y="90" width="150" height="26" rx="12" fill="#888780"/>
+  <rect x="30" y="104" width="150" height="12" rx="0" fill="#888780"/>
+  <text x="105" y="106" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">SUBMITTED</text>
+  <text x="105" y="130" text-anchor="middle" font-size="10" fill="#5F5E5A">POST /jobs received</text>
+  <text x="105" y="143" text-anchor="middle" font-size="10" fill="#888">UUID assigned</text>
+
+  <!-- Arrow -->
+  <line x1="180" y1="120" x2="218" y2="120" stroke="#888780" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- QUEUED -->
+  <rect x="218" y="90" width="150" height="60" rx="12" fill="#E6F1FB" stroke="#378ADD" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="218" y="90" width="150" height="26" rx="12" fill="#378ADD"/>
+  <rect x="218" y="104" width="150" height="12" rx="0" fill="#378ADD"/>
+  <text x="293" y="106" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">QUEUED</text>
+  <text x="293" y="130" text-anchor="middle" font-size="10" fill="#0C447C">Pushed to Redis</text>
+  <text x="293" y="143" text-anchor="middle" font-size="10" fill="#185FA5">jobs:high or jobs:normal</text>
+
+  <!-- Arrow -->
+  <line x1="368" y1="120" x2="406" y2="120" stroke="#378ADD" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- PROCESSING -->
+  <rect x="406" y="90" width="160" height="60" rx="12" fill="#FAEEDA" stroke="#BA7517" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="406" y="90" width="160" height="26" rx="12" fill="#BA7517"/>
+  <rect x="406" y="104" width="160" height="12" rx="0" fill="#BA7517"/>
+  <text x="486" y="106" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">PROCESSING</text>
+  <text x="486" y="130" text-anchor="middle" font-size="10" fill="#633806">Worker picked up job</text>
+  <text x="486" y="143" text-anchor="middle" font-size="10" fill="#854F0B">BRPOP · workerId assigned</text>
+
+  <!-- Arrow -->
+  <line x1="566" y1="120" x2="604" y2="120" stroke="#BA7517" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- COMPLETED -->
+  <rect x="604" y="90" width="260" height="60" rx="12" fill="#EAF3DE" stroke="#3B6D11" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="604" y="90" width="260" height="26" rx="12" fill="#3B6D11"/>
+  <rect x="604" y="104" width="260" height="12" rx="0" fill="#3B6D11"/>
+  <text x="734" y="106" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">COMPLETED ✓</text>
+  <text x="734" y="130" text-anchor="middle" font-size="10" fill="#27500A">Job processed successfully</text>
+  <text x="734" y="143" text-anchor="middle" font-size="10" fill="#3B6D11">latencyMs recorded · WebSocket event emitted</text>
+
+  <!-- Arrow down from PROCESSING to FAILED -->
+  <line x1="486" y1="150" x2="486" y2="215" stroke="#E24B4A" stroke-width="2" marker-end="url(#arr)"/>
+  <rect x="492" y="168" width="60" height="18" rx="4" fill="#FCEBEB"/>
+  <text x="522" y="181" text-anchor="middle" font-size="10" fill="#A32D2D" font-weight="600">on error</text>
+
+  <!-- FAILED -->
+  <rect x="356" y="215" width="260" height="62" rx="12" fill="#FCEBEB" stroke="#E24B4A" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="356" y="215" width="260" height="26" rx="12" fill="#E24B4A"/>
+  <rect x="356" y="229" width="260" height="12" rx="0" fill="#E24B4A"/>
+  <text x="486" y="231" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">FAILED</text>
+  <text x="486" y="254" text-anchor="middle" font-size="10" fill="#791F1F">Error caught · error message logged</text>
+  <text x="486" y="268" text-anchor="middle" font-size="10" fill="#A32D2D">errorSig hashed (MD5) for poison pill check</text>
+
+  <!-- Decision diamond (retry?) -->
+  <polygon points="486,310 540,345 486,380 432,345" fill="#FFF3CD" stroke="#BA7517" stroke-width="2" filter="url(#shadow)"/>
+  <text x="486" y="340" text-anchor="middle" font-size="11" fill="#633806" font-weight="600">retry?</text>
+  <text x="486" y="354" text-anchor="middle" font-size="10" fill="#854F0B">retryCount</text>
+  <line x1="486" y1="277" x2="486" y2="308" stroke="#E24B4A" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- YES path → RETRYING -->
+  <line x1="432" y1="345" x2="280" y2="345" stroke="#1D9E75" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="355" y="338" text-anchor="middle" font-size="10" fill="#0F6E56" font-weight="600">YES (count &lt; max)</text>
+
+  <!-- RETRYING -->
+  <rect x="100" y="315" width="180" height="62" rx="12" fill="#E1F5EE" stroke="#1D9E75" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="100" y="315" width="180" height="26" rx="12" fill="#1D9E75"/>
+  <rect x="100" y="329" width="180" height="12" rx="0" fill="#1D9E75"/>
+  <text x="190" y="331" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">RETRYING</text>
+  <text x="190" y="354" text-anchor="middle" font-size="10" fill="#085041">Exponential backoff</text>
+  <text x="190" y="368" text-anchor="middle" font-size="10" fill="#0F6E56">2s · 4s · 8s delays</text>
+
+  <!-- Arrow RETRYING → back to QUEUED (curved) -->
+  <path d="M190 315 Q190 200 250 150 Q268 135 250 120" fill="none" stroke="#1D9E75" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arr)"/>
+  <text x="142" y="230" font-size="10" fill="#1D9E75" font-weight="600">re-queued</text>
+
+  <!-- NO path → DEAD LETTERED -->
+  <line x1="540" y1="345" x2="640" y2="345" stroke="#E24B4A" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="588" y="338" text-anchor="middle" font-size="10" fill="#A32D2D" font-weight="600">NO (max reached)</text>
+
+  <!-- DEAD LETTERED -->
+  <rect x="640" y="315" width="220" height="62" rx="12" fill="#FCEBEB" stroke="#A32D2D" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="640" y="315" width="220" height="26" rx="12" fill="#A32D2D"/>
+  <rect x="640" y="329" width="220" height="12" rx="0" fill="#A32D2D"/>
+  <text x="750" y="331" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">DEAD-LETTERED</text>
+  <text x="750" y="354" text-anchor="middle" font-size="10" fill="#501313">Moved to jobs:dead-letter</text>
+  <text x="750" y="368" text-anchor="middle" font-size="10" fill="#791F1F">Replayable via POST /:jobId/replay</text>
+
+  <!-- Poison pill check from FAILED -->
+  <line x1="356" y1="246" x2="240" y2="246" stroke="#A32D2D" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+  <text x="290" y="238" text-anchor="middle" font-size="10" fill="#A32D2D">same error ×3?</text>
+
+  <!-- POISON PILL -->
+  <rect x="30" y="215" width="210" height="62" rx="12" fill="#FCEBEB" stroke="#791F1F" stroke-width="2.5" filter="url(#shadow)"/>
+  <rect x="30" y="215" width="210" height="26" rx="12" fill="#791F1F"/>
+  <rect x="30" y="229" width="210" height="12" rx="0" fill="#791F1F"/>
+  <text x="135" y="231" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">POISON-PILL</text>
+  <text x="135" y="254" text-anchor="middle" font-size="10" fill="#501313">MD5 hash matches 3 times</text>
+  <text x="135" y="268" text-anchor="middle" font-size="10" fill="#791F1F">Retries halted permanently</text>
+
+  <!-- Replay arrow from DEAD LETTERED -->
+  <path d="M750 377 Q750 440 600 460 Q500 475 480 460 Q440 448 430 420" fill="none" stroke="#378ADD" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arr)"/>
+  <text x="620" y="455" font-size="10" fill="#185FA5" font-weight="600">replay via API</text>
+
+  <!-- Legend row -->
+  <rect x="30" y="510" width="130" height="34" rx="8" fill="#F1EFE8" stroke="#888780" stroke-width="1"/>
+  <text x="95" y="532" text-anchor="middle" font-size="10" fill="#5F5E5A">Initial / neutral states</text>
+
+  <rect x="180" y="510" width="130" height="34" rx="8" fill="#FAEEDA" stroke="#BA7517" stroke-width="1"/>
+  <text x="245" y="532" text-anchor="middle" font-size="10" fill="#633806">In-progress states</text>
+
+  <rect x="330" y="510" width="130" height="34" rx="8" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1"/>
+  <text x="395" y="532" text-anchor="middle" font-size="10" fill="#27500A">Success state</text>
+
+  <rect x="480" y="510" width="130" height="34" rx="8" fill="#FCEBEB" stroke="#E24B4A" stroke-width="1"/>
+  <text x="545" y="532" text-anchor="middle" font-size="10" fill="#A32D2D">Failure states</text>
+
+  <rect x="630" y="510" width="130" height="34" rx="8" fill="#E1F5EE" stroke="#1D9E75" stroke-width="1"/>
+  <text x="695" y="532" text-anchor="middle" font-size="10" fill="#085041">Recovery / retry</text>
+</svg>
